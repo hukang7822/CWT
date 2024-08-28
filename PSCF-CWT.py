@@ -5,8 +5,6 @@ Author: Kang Hu, NUIST
 Written: 2024-04-26
 Version 1.0
 email: 200060@nuist.edu.cn
-First column of PM data is date; Second column is PM values
-Tdump file and PM file should be saved in different folders
 '''
 
 
@@ -148,23 +146,6 @@ def Grid_points_passed_by_two_coordinates(matrix, FirstLat, FirstLon, SecondLat,
         print ('Error: HYSPLIT trajectory is out of Grid boundary')
         sys.exit()
 
-    '''
-    转换成Grid里的点对应的经纬度
-    '''
-    startLon_grid,endLon_grid,startLat_grid,endLat_grid = LocationDecision(FirstLat, FirstLon, SecondLat, SecondLon)      ####  经纬度范围 + 1附近点位
-
-    grid_points = set()
-
-    '''
-    if startLon_grid > endLon_grid:
-        tempVal = endLon_grid
-        endLon_grid = startLon_grid
-        startLon_grid = tempVal
-    if startLat_grid > endLat_grid:
-        tempVal = endLat_grid
-        endLat_grid = startLat_grid
-        startLat_grid = tempVal
-    '''
 
     if endLon_grid == startLon_grid:
         for input_grid in range(int(startLat_grid), int(endLat_grid) + 1, 1):
@@ -194,20 +175,6 @@ def Grid_points_passed_by_two_coordinates(matrix, FirstLat, FirstLon, SecondLat,
     return matrix
 
 
-    """
-    FirstLat_point = (float(FirstLat) - float(Down_lat_temp)) / float(step)
-    FirstLon_point = (float(FirstLon) - float(Left_lon_temp)) / float(step)
-    SecondLat_point = (float(SecondLat) - float(Down_lat_temp)) / float(step)
-    SecondLon_point = (float(SecondLon) - float(Left_lon_temp)) / float(step)
-    start_point = [FirstLat_point, SecondLat_point]
-    second_point = [FirstLon_point, SecondLon_point]
-    #plt.xticks(np.arange(0,15,1))
-    #plt.yticks(np.arange(0,15,1))
-    plt.plot(start_point,second_point, color = 'b')
-    plt.imshow(matrix.T, cmap = plt.cm.hot, vmin = 0, vmax = 10)
-    #plt.contourf(arra_lon, arra_lat, matrix, levels = 10, colors = 'r')
-    plt.grid(True)
-    """
 
 def FindNearstLessThan(down, up, step, inputVar):
     num = int((float(up) - float(down)) / float(step)) + 1
@@ -471,91 +438,6 @@ def CWT():
             W = np.full((math.ceil(num_lat), math.ceil(num_lon)), np.nan)
             denominator = np.full((math.ceil(num_lat), math.ceil(num_lon)), np.nan)
 
-
-def Region_seperate():
-    Left_lon_temp, Right_lon_temp, Up_lat_temp, Down_lat_temp, step, Weight = Grid_set_up()
-    start_lon_val = 108
-    end_lon_val = 121
-    start_lat_val = 34
-    end_lat_val = 43
-    start_lat = math.ceil((start_lat_val+90)/step)
-    start_lon = math.ceil((start_lon_val+180)/step)
-    end_lat = math.ceil((end_lat_val+90)/step)
-    end_lon = math.ceil((end_lon_val+180)/step)
-    result = []
-    pwd = '/Volumes/HK/NUIST/CWT/CWT/2013'
-
-    for root, dirs, files in os.walk(pwd):
-        files[:] = [d for d in files if not d.startswith('.')]
-        files.sort()
-        for file in files:
-            file_path = os.path.join(root, file)
-            North = 0
-            West = 0
-            South = 0
-            East = 0
-            local = 0
-            data = pd.read_csv(file_path, sep=',', encoding='ISO-8859-1', error_bad_lines=False, header = None)
-            date_ = file[4:14]      ####
-            date = date_[:4] +  '/' + date_[4:6] + '/' + date_[6:8] + ' ' + date_[8:] + ':00:00'        ####
-            print(file_path)
-            for i in range(start_lon, end_lon + 1, 1):
-                lon_temp = Left_lon_temp + step * i
-                for j in range(start_lat,end_lat + 1, 1):
-                    lat_temp = Down_lat_temp + step * j
-                    temp_val = data.iloc[j,i]
-                    if math.isnan(temp_val):
-                        continue
-                    if float(lat_temp) > 41 and float(lat_temp) < 43:
-                        North += temp_val
-                    elif float(lon_temp) < 115:
-                        West += temp_val
-                    elif float(lat_temp) < 38.85:
-                        South += temp_val
-                    elif float(lon_temp) < 117:
-                        local += temp_val
-                    else:
-                        East += temp_val
-
-            res = pd.concat([pd.Series(date), pd.Series(local),pd.Series(North),pd.Series(West),pd.Series(South),pd.Series(East)], axis=1, ignore_index=False)
-            result.append(res)
-    header = ['Time', 'Local', 'North', 'West', 'South', 'East']
-    result = pd.concat(result, ignore_index=False)
-    result.to_csv('/Volumes/HK/NUIST/CWT/CWT/results_2013.csv', sep=',', header = header, index=False)
-
-def value_to_radians():
-    pwd = '/Volumes/HK/NUIST/CWT/CWT/time_ECMWF.txt'
-    f = open('/Volumes/HK/NUIST/CWT/CWT/Res_DOY_ECMWF.csv', 'a')
-    data = open(pwd, 'r')
-    data.readline()
-    while 1:
-        line = data.readline()
-        if not line:
-            break
-        year = int(line.strip().split(' ')[0].split('/')[0])
-        month_original = int(line.strip().split(' ')[0].split('/')[1])
-        line_split = line.strip()
-        time1 = datetime.strptime(line_split, "%Y/%m/%d %H:%M:%S")
-        DOY_original = int(time1.timetuple().tm_yday)
-        DOW_original = int(time1.strftime("%w")) + 1
-        if (year % 4 == 0 and year % 100 != 0) or year % 400 == 0:
-            DOY = (math.pi / 182.5 * (DOY_original - 183.5))
-        else:
-            DOY = (math.pi / 183 * (DOY_original - 184))
-        DOW = math.pi / 3.5 * (DOW_original - 4.5)
-        Month = math.pi / 6 * (month_original-7)
-        f.write('%10s,%10s,%10s,%10s,%10s,%10s,%10s\n' % (year, DOY_original, DOW_original,month_original, DOY, DOW, Month))
-    f.close()
-    data.close()
-
-
-
-
-     #print (math.pi / 6 * (value-7))        ####Month
-    # print(math.pi / 11.5 * (value - 12.5))          ####Hour
-    #print(math.pi / 3.5 * (value - 4.5))            ####DOW
-     #print(math.pi / 182.5 * (value - 183.5))        ####DOY 非闰年
-    #print(math.pi / 183 * (value - 184))  ####DOY 闰年
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 
