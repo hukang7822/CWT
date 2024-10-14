@@ -330,54 +330,25 @@ def CWT_append(numerator, denominator, W, Weight):
     return res
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
-def HYSPLTI():
-    working_dir = '/Volumes/Macintosh HD - Data/Users/zju/hysplit/working'
-    pwd = '/Volumes/HK/NUIST/CWT/HYSPLIT/'
-    meteo_dir = '/Volumes/Hukang/gdas/'
-    basename = 'traj-test'
-    for i in range(2013,2021):
-        storage_dir = pwd + str(i)
-        years = [i]
-        months = [1,2,3,4,5,6,7,8,9,10,11,12]
-        hours = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
-        altitudes = [50]
-        location = (39.98, 116.33)
-        runtime = -24
+pwd_tdump_input = ''
+pwd_PM_input =  ''
+pwd_matrix_output = ''
+pwd_matrix_CWT_output = ''
 
-        pysplit.generate_bulktraj(basename, working_dir, storage_dir, meteo_dir,
-                                  years, months, hours, altitudes, location, runtime,
-                                  monthslice=slice(0, 32, 1), get_reverse=False,
-                                  get_clipped=False, hysplit='/Users/zju/hysplit/exec/hyts_ens')
+def Grid_set_up():
+    Left_lon = -180
+    Right_lon = 180
+    Up_lat = 90
+    Down_lat = -90
+    Degree = 0.25
+    Weight = [1, 0.7, 0.4, 0.17]
+    return Left_lon, Right_lon, Up_lat, Down_lat, Degree, Weight
 
-def UTC_to_BJ_Time():
-    pwd = '/Volumes/HK/NUIST/CWT/HYSPLIT/2020'
-
-    for root, dirs, files in os.walk(pwd):
-        files[:] = [d for d in files if not d.startswith('.')]
-        files.sort(reverse=True)
-        for file in files:
-            file_path = os.path.join(root, file)
-            UTC_temp = file_path.split('/')[-1][-10:]
-            name_temp = file_path.split('/')[-1][0:9]
-            year = UTC_temp[:4]
-            month = UTC_temp[4:6]
-            day = UTC_temp[6:8]
-            hour = UTC_temp[8:10]
-            UTC = datetime(year=int(year),month = int(month),day = int(day),hour = int(hour), tzinfo=timezone('UTC'))
-            BJ_time_temp = UTC.astimezone(timezone('Asia/Shanghai'))
-            print (BJ_time_temp)
-            BJ_time_temp1 = str(BJ_time_temp).split('+')[0]
-            BJ_time_temp2 = str(BJ_time_temp1).split(' ')[0].split('-')
-            BJ_time = BJ_time_temp2[0] + BJ_time_temp2[1] + BJ_time_temp2[2] + str(BJ_time_temp1).split(' ')[1][0:2]
-            name_new = pwd + '/' + name_temp + '-' + BJ_time
-            os.rename(file_path, name_new)
-
-#####输出时间相同的HYSPLIT和PM数据在MatrixofTrajPM-Year文件夹中
 def File_load_HYSPLT():
     import os
-    pwd_tdump = '/Volumes/HK/NUIST/CWT/HYSPLIT/2019/'
-    pwd_PM = '/Volumes/HK/NUIST/CWT/PM_data/PM25.csv'
-    pwd_output = '/Volumes/HK/NUIST/CWT'
+    pwd_tdump = pwd_matrix_output
+    pwd_PM = pwd_PM_input
+    pwd_output = pwd_matrix_output
     nn = 0
     time_PM, PM = Pollution_read(pwd_PM)
     for root, dirs, files in os.walk(pwd_tdump):
@@ -395,19 +366,10 @@ def File_load_HYSPLT():
             nn = SameTime_Pick(time_PM, PM, date_and_time_check, matrix_lat,matrix_lon, nn, pwd_output)
             nn += 1
 
-def Grid_set_up():
-    Left_lon = -180
-    Right_lon = 180
-    Up_lat = 90
-    Down_lat = -90
-    Degree = 0.25
-    Weight = [1, 0.7, 0.4, 0.17]
-    return Left_lon, Right_lon, Up_lat, Down_lat, Degree, Weight
-
 def CWT():
 
-    pwd = '/Volumes/HK/NUIST/CWT/append-a'
-    f = '/Volumes/HK/NUIST/CWT/'
+    pwd = pwd_matrix_output
+    f = pwd_matrix_CWT_output
 
     Left_lon_temp, Right_lon_temp, Up_lat_temp, Down_lat_temp, step, Weight = Grid_set_up()
     num_lat = abs(Up_lat_temp - Down_lat_temp) / step + 1
@@ -441,7 +403,5 @@ def CWT():
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-if __name__ == '__main__':
-    value_to_radians()
 
 
