@@ -1,21 +1,9 @@
-'''
-Python code to calculate PSCF and CWT analysis for time series
-From: Kang Hu, Nanjing University of Information Science and Technology, Hong Liao group
-Author: Kang Hu, NUIST
-Written: 2024-04-26
-Version 1.0
-email: 200060@nuist.edu.cn
-'''
-
-
-import pysplit
 import pandas as pd
 import numpy as np
 import sys
 import os
 import math
 from datetime import datetime
-from pytz import timezone
 
 def File_load_HYSPLT_append(file_path, date_and_time_check, temp):
     data = open(file_path, 'r',encoding='gb18030' , errors='ignore')
